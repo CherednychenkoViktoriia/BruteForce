@@ -37,4 +37,4 @@
 .vs/
 Debug/
 Release/
-.txt
+*.txt

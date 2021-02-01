@@ -200,33 +200,34 @@ void ProgressIndicator(unsigned int passwordsGenerated, std::chrono::duration<do
     std::cout << "Speed: " << speed << " pass/sec" << std::endl;    
 }
 
-void LogPasswordsChecked(const std::string& pathOfPossibleKeys, char guess[]) 
-{
-    std::string possiblePassword;
+void LogPasswordsChecked(const std::string& pathOfCheckedPasswords, std::vector<std::string>& vectorPasswordsGenerated)
+{    
     std::fstream fileStream;
-    fileStream.open(pathOfPossibleKeys, std::fstream::app);
-    for (unsigned int i = 0; i < strlen(guess); ++i) {    
-        possiblePassword += guess[i];
-    }
-    fileStream << possiblePassword + '\n';
-    fileStream.close();
-    possiblePassword.clear();    
+    fileStream.open(pathOfCheckedPasswords, std::fstream::app);   
+    fileStream << vectorPasswordsGenerated[g_checkedPasswords] + '\n';
+    fileStream.close();     
 }
 
 void BruteForce(std::vector<std::string>& vectorPasswordsGenerated, const std::string& pathOfCipherText,
-    const std::string& pathOfDecrypredText, std::chrono::system_clock::time_point start, unsigned int passwordsGenerated)
-{    
-    for (; g_checkedPasswords < passwordsGenerated && g_passwordIsNotFound; ++g_checkedPasswords) {
+    const std::string& pathOfDecrypredText, std::chrono::system_clock::time_point start, unsigned int passwordsGenerated,
+    const std::string& pathOfCheckedPasswords, std::string& passwordLog, std::string& key)
+{   
+    std::unique_lock<std::mutex> guard(mutex);
 
-        std::unique_lock<std::mutex> guard(mutex);
+    for (; g_checkedPasswords < passwordsGenerated && g_passwordIsNotFound; ++g_checkedPasswords) {
 
         PasswordToKey(vectorPasswordsGenerated[g_checkedPasswords]);
         bool res = Decrypt(pathOfCipherText, pathOfDecrypredText);
 
+        if (key == passwordLog) {
+            LogPasswordsChecked(pathOfCheckedPasswords, vectorPasswordsGenerated);
+        }
+
         if (res) {
             std::cout << vectorPasswordsGenerated[g_checkedPasswords] << std::endl;
             g_passwordIsNotFound = false;
-        }
+            break;
+        }        
 
         auto end = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsedTime = end - start;
@@ -237,13 +238,9 @@ void BruteForce(std::vector<std::string>& vectorPasswordsGenerated, const std::s
     }
 }
 
-void CheckPassword(const std::string& pathOfPossibleKeys, const std::string& pathOfCipherText, const std::string& pathOfDecrypredText)
-{      
-    std::cout << "Please, enter the key: " << std::endl;
-    std::string key;
-    std::cin >> key;
-    std::string passwordLog = "--log_passwords";
-    
+void CheckPassword(const std::string& pathOfCheckedPasswords, const std::string& pathOfCipherText, const std::string& pathOfDecrypredText)
+{            
+    std::cout << "Passwords generating..." << std::endl;
     const char chars[] = "abcdefghijklmnopqrstuvwxyz0123456789";
     int i, j = 0;
     const int maxSize = 5;
@@ -278,29 +275,30 @@ void CheckPassword(const std::string& pathOfPossibleKeys, const std::string& pat
             }
         }            
             
-        vectorPasswordsGenerated.emplace_back(guess);
-        
-        if (key == passwordLog) {                        
-            LogPasswordsChecked(pathOfPossibleKeys, guess);             
-        }
-
+        vectorPasswordsGenerated.emplace_back(guess);        
         ++guessc[0];                   
-    }      
+    } 
+
+    std::cout << "Done!" << std::endl;
+    std::cout << "Please, enter the key for passwords log: " << std::endl;
+    std::string key;
+    std::cin >> key;
+    std::string passwordLog = "--log_passwords";
 
     for (unsigned int i = 0; i < passwordsGenerated && g_passwordIsNotFound; ++i) {
     
         std::thread threadForCheckingPasswords1(BruteForce, std::ref(vectorPasswordsGenerated), std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), start, passwordsGenerated);
+            std::ref(pathOfDecrypredText), start, passwordsGenerated, std::ref(pathOfCheckedPasswords), std::ref(passwordLog), std::ref(key));
         std::thread threadForCheckingPasswords2(BruteForce, std::ref(vectorPasswordsGenerated), std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), start, passwordsGenerated);
+            std::ref(pathOfDecrypredText), start, passwordsGenerated, std::ref(pathOfCheckedPasswords), std::ref(passwordLog), std::ref(key));
         std::thread threadForCheckingPasswords3(BruteForce, std::ref(vectorPasswordsGenerated), std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), start, passwordsGenerated);
+            std::ref(pathOfDecrypredText), start, passwordsGenerated, std::ref(pathOfCheckedPasswords), std::ref(passwordLog), std::ref(key));
         std::thread threadForCheckingPasswords4(BruteForce, std::ref(vectorPasswordsGenerated), std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), start, passwordsGenerated);    
+            std::ref(pathOfDecrypredText), start, passwordsGenerated, std::ref(pathOfCheckedPasswords), std::ref(passwordLog), std::ref(key));
         std::thread threadForCheckingPasswords5(BruteForce, std::ref(vectorPasswordsGenerated), std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), start, passwordsGenerated);
+            std::ref(pathOfDecrypredText), start, passwordsGenerated, std::ref(pathOfCheckedPasswords), std::ref(passwordLog), std::ref(key));
         std::thread threadForCheckingPasswords6(BruteForce, std::ref(vectorPasswordsGenerated), std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), start, passwordsGenerated);
+            std::ref(pathOfDecrypredText), start, passwordsGenerated, std::ref(pathOfCheckedPasswords), std::ref(passwordLog), std::ref(key));
                                   
         threadForCheckingPasswords1.join();
         threadForCheckingPasswords2.join();
@@ -319,12 +317,13 @@ int main(int argc, char** argv)
     std::string pathOfPlainText = folderPath + "\\plain_text.txt";
     std::string pathOfCipherText = folderPath + "\\chipher_text_brute_force";
     std::string pathOfDecrypredText = folderPath + "\\decrypred_text.txt";
-    std::string pathOfPossibleKeys = folderPath + "\\possible_passwords.txt";
+    std::string pathOfCheckedPasswords = folderPath + "\\checked_passwords.txt";
+
     try
     {
         //PasswordToKey(pass);
         //Encrypt(pathOfPlainText, pathOfCipherText);
-        CheckPassword(pathOfPossibleKeys, pathOfCipherText, pathOfDecrypredText);
+        CheckPassword(pathOfCheckedPasswords, pathOfCipherText, pathOfDecrypredText);
         //Decrypt(pathOfCipherText, pathOfDecrypredText);
     }
     catch (const std::runtime_error& ex)
