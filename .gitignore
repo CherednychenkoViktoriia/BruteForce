@@ -37,3 +37,6 @@
 .vs/
 Debug/
 Release/
+*.txt
+Dependencies/
+*.diagsession
