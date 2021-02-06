@@ -1,6 +1,6 @@
 #pragma once
 
-extern bool g_passwordIsNotFound;
+extern std::atomic<bool> g_passwordIsNotFound;
 
 void PasswordToKey(std::string& password);
 

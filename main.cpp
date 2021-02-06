@@ -3,7 +3,6 @@
 #include <exception>
 #include <iostream>
 #include <thread>
-#include <future>
 
 #include "openssl/evp.h"
 #include "openssl/aes.h"
@@ -24,50 +23,37 @@ int main(int argc, char** argv)
     std::string pathOfCheckedPasswords = folderPath + "\\checked_passwords.txt";
 
     BruteForce obj;    
-    obj.GeneratePasswords();
-
-    auto itBeginThread1 = obj.GetVecPassGenerated().begin();
-    auto itEndThread1 = std::next(obj.GetVecPassGenerated().begin(), (obj.GetPassGenerated() / 9));
-    auto itBeginThread2 = std::next(obj.GetVecPassGenerated().begin(), obj.GetPassGenerated() / 9);
-    auto itEndThread2 = std::next(obj.GetVecPassGenerated().begin(), 2 * obj.GetPassGenerated() / 9);
-    auto itBeginThread3 = std::next(obj.GetVecPassGenerated().begin(), 2 * obj.GetPassGenerated() / 9);
-    auto itEndThread3 = std::next(obj.GetVecPassGenerated().begin(), 3 * obj.GetPassGenerated() / 9);
-    auto itBeginThread4 = std::next(obj.GetVecPassGenerated().begin(), 3 * obj.GetPassGenerated() / 9);
-    auto itEndThread4 = std::next(obj.GetVecPassGenerated().begin(), 4 * obj.GetPassGenerated() / 9);
-    auto itBeginThread5 = std::next(obj.GetVecPassGenerated().begin(), 4 * obj.GetPassGenerated() / 9);
-    auto itEndThread5 = std::next(obj.GetVecPassGenerated().begin(), 5 * obj.GetPassGenerated() / 9);
-    auto itBeginThread6 = std::next(obj.GetVecPassGenerated().begin(), 5 * obj.GetPassGenerated() / 9);
-    auto itEndThread6 = std::next(obj.GetVecPassGenerated().begin(), 6 * obj.GetPassGenerated() / 9);
-    auto itBeginThread7 = std::next(obj.GetVecPassGenerated().begin(), 6 * obj.GetPassGenerated() / 9);
-    auto itEndThread7 = std::next(obj.GetVecPassGenerated().begin(), 7 * obj.GetPassGenerated() / 9);
-    auto itBeginThread8 = std::next(obj.GetVecPassGenerated().begin(), 7 * obj.GetPassGenerated() / 9);
-    auto itEndThread8 = std::next(obj.GetVecPassGenerated().begin(), 8 * obj.GetPassGenerated() / 9);
-    auto itBeginThread9 = std::next(obj.GetVecPassGenerated().begin(), 8 * obj.GetPassGenerated() / 9);
-    auto itEndThread9 = obj.GetVecPassGenerated().end();
-
+  
     try
-    {
-        //PasswordToKey(pass);
+    {   //PasswordToKey(pass);
         //Encrypt(pathOfPlainText, pathOfCipherText);
-                  
+
+        std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+        obj.SetStart(start);
+
+        std::cout << "Please, enter the key for passwords log: " << std::endl;
+        std::string key;
+        std::cin >> key;
+        obj.SetKey(key);          
+
         std::thread threadForCheckingPasswords1(&BruteForce::BruteForcePassword, &obj, std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), itBeginThread1, itEndThread1);
+            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), 0, 36 * 36 * 36 * 4);
         std::thread threadForCheckingPasswords2(&BruteForce::BruteForcePassword, &obj, std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), itBeginThread2, itEndThread2);
+            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), 36 * 36 * 36 * 4, 36 * 36 * 36 * 8);
         std::thread threadForCheckingPasswords3(&BruteForce::BruteForcePassword, &obj, std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), itBeginThread3, itEndThread3);
+            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), 36 * 36 * 36 * 8, 36 * 36 * 36 * 12);
         std::thread threadForCheckingPasswords4(&BruteForce::BruteForcePassword, &obj, std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), itBeginThread4, itEndThread4);
+            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), 36 * 36 * 36 * 12, 36 * 36 * 36 * 16);
         std::thread threadForCheckingPasswords5(&BruteForce::BruteForcePassword, &obj, std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), itBeginThread5, itEndThread5);
+            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), 36 * 36 * 36 * 16, 36 * 36 * 36 * 20);
         std::thread threadForCheckingPasswords6(&BruteForce::BruteForcePassword, &obj, std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), itBeginThread6, itEndThread6);
+            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), 36 * 36 * 36 * 20, 36 * 36 * 36 * 24);
         std::thread threadForCheckingPasswords7(&BruteForce::BruteForcePassword, &obj, std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), itBeginThread7, itEndThread7);
+            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), 36 * 36 * 36 * 24, 36 * 36 * 36 * 28);
         std::thread threadForCheckingPasswords8(&BruteForce::BruteForcePassword, &obj, std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), itBeginThread8, itEndThread8);
+            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), 36 * 36 * 36 * 28, 36 * 36 * 36 * 32);
         std::thread threadForCheckingPasswords9(&BruteForce::BruteForcePassword, &obj, std::ref(pathOfCipherText),
-            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), itBeginThread9, itEndThread9);
+            std::ref(pathOfDecrypredText), std::ref(pathOfCheckedPasswords), 36 * 36 * 36 * 32, 36 * 36 * 36 * 36);
         
         threadForCheckingPasswords1.join();
         threadForCheckingPasswords2.join();
@@ -78,7 +64,7 @@ int main(int argc, char** argv)
         threadForCheckingPasswords7.join();
         threadForCheckingPasswords8.join();
         threadForCheckingPasswords9.join();
-
+        
         std::ofstream fileStream;
         fileStream.open(pathOfCheckedPasswords, std::ios::app);
         fileStream << obj.GetFoundPassword() + '\n';

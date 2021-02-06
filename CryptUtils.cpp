@@ -13,8 +13,8 @@
 
 unsigned char key[EVP_MAX_KEY_LENGTH];
 unsigned char iv[EVP_MAX_IV_LENGTH];
-bool g_passwordIsNotFound = true;
-bool decryptFinalResults = false;
+std::atomic<bool> g_passwordIsNotFound = true;
+std::atomic<bool> g_decryptFinalResults = false;
 
 void PasswordToKey(std::string& password)
 {
@@ -108,11 +108,11 @@ void DecryptAes(std::vector<unsigned char> chipherText, std::vector<unsigned cha
     int lastPartLen = 0;
 
     if (!EVP_DecryptFinal_ex(ctx, &decrypredTextBuf[0] + decrypredTextSize, &lastPartLen)) {       
-        decryptFinalResults = false;
+        g_decryptFinalResults = false;        
     }
 
     else {        
-        decryptFinalResults = true;
+        g_decryptFinalResults = true;
     }
 
     decrypredTextSize += lastPartLen;
@@ -128,7 +128,8 @@ bool Decrypt(const std::string& pathOfCipherText, const std::string& pathOfDecry
     std::vector<unsigned char> cipherText;
     ReadFile(pathOfCipherText, cipherText);
 
-    std::vector<unsigned char> hashOfCipherText(cipherText.begin() + cipherText.size() - SHA256_DIGEST_LENGTH, cipherText.end());
+    std::vector<unsigned char> hashOfCipherText(cipherText.begin() + cipherText.size() -
+        SHA256_DIGEST_LENGTH, cipherText.end());
     cipherText.resize(cipherText.size() - SHA256_DIGEST_LENGTH);
 
     std::vector<unsigned char> decrypredText;
@@ -137,7 +138,7 @@ bool Decrypt(const std::string& pathOfCipherText, const std::string& pathOfDecry
 
     bool resOfDecrypt = false;
 
-    if (!decryptFinalResults) {
+    if (!g_decryptFinalResults) {
         return resOfDecrypt;
     }
 
@@ -145,15 +146,16 @@ bool Decrypt(const std::string& pathOfCipherText, const std::string& pathOfDecry
 
     std::vector<unsigned char> hashOfDecrypredText;
     CalculateHash(decrypredText, hashOfDecrypredText);
-
     
     if (hashOfCipherText != hashOfDecrypredText) {
         g_passwordIsNotFound = true;
-        resOfDecrypt = false;
+        resOfDecrypt = false;        
     }
-    else {
+
+    else {        
         g_passwordIsNotFound = false;
         resOfDecrypt = true;
     }
+
     return resOfDecrypt;
 }
